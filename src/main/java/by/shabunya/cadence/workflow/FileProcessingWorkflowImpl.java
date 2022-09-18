@@ -24,7 +24,7 @@ public class FileProcessingWorkflowImpl implements FileProcessingWorkflow {
     public void startFileProcessing(String fileName) {
         String newFileName = fileProcessingActivityWorker.createNewFileName(fileName);
         fileProcessingActivityWorker.downloadFileFromCloudBucket(fileName);
-        fileProcessingActivityWorker.convertFileToXLS();
+        fileProcessingActivityWorker.convertFileToXLS(fileName);
         fileProcessingActivityWorker.uploadFileToCloudBucket();
     }
 }

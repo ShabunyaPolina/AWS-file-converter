@@ -8,7 +8,7 @@ public interface FileProcessingActivityWorker {
     @ActivityMethod
     void downloadFileFromCloudBucket(String fileName);
     @ActivityMethod
-    void convertFileToXLS();
+    void convertFileToXLS(String fileName);
     @ActivityMethod
     void uploadFileToCloudBucket();
 }
