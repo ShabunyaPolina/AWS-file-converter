@@ -7,19 +7,23 @@ import com.uber.cadence.workflow.Workflow;
 import java.time.Duration;
 
 public class FileProcessingWorkflowImpl implements FileProcessingWorkflow {
-    @Override
-    public void startFileProcessing(String fileName) {
+    private final FileProcessingActivityWorker fileProcessingActivityWorker;
+
+    public FileProcessingWorkflowImpl() {
         ActivityOptions options =
                 new ActivityOptions.Builder()
-                        .setTaskList(FileProcessingWorkflowImpl.TASK_LIST)
+                        .setTaskList(TASK_LIST)
                         .setScheduleToCloseTimeout(Duration.ofSeconds(10))
                         .build();
 
-        FileProcessingActivityWorker fileProcessingActivityWorker  =
+        this.fileProcessingActivityWorker =
                 Workflow.newActivityStub(FileProcessingActivityWorker.class, options);
+    }
 
-        fileProcessingActivityWorker.createNewFileName();
-        fileProcessingActivityWorker.downloadFileFromCloudBucket();
+    @Override
+    public void startFileProcessing(String fileName) {
+        String newFileName = fileProcessingActivityWorker.createNewFileName(fileName);
+        fileProcessingActivityWorker.downloadFileFromCloudBucket(fileName);
         fileProcessingActivityWorker.convertFileToXLS();
         fileProcessingActivityWorker.uploadFileToCloudBucket();
     }

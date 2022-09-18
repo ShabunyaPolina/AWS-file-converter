@@ -4,9 +4,9 @@ import com.uber.cadence.activity.ActivityMethod;
 
 public interface FileProcessingActivityWorker {
     @ActivityMethod
-    void createNewFileName();
+    String createNewFileName(String fileName);
     @ActivityMethod
-    void downloadFileFromCloudBucket();
+    void downloadFileFromCloudBucket(String fileName);
     @ActivityMethod
     void convertFileToXLS();
     @ActivityMethod

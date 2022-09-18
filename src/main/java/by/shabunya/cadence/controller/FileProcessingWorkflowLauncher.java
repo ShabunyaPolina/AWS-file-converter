@@ -6,13 +6,9 @@ import com.uber.cadence.WorkflowExecution;
 import com.uber.cadence.client.WorkflowClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/file-processing-workflow")
 public class FileProcessingWorkflowLauncher {
     private final WorkflowClient workflowClient;
 
@@ -20,19 +16,19 @@ public class FileProcessingWorkflowLauncher {
         this.workflowClient = workflowClient;
     }
 
-    @GetMapping
-    public ResponseEntity<WorkflowResponse> startWorkflow(@RequestParam String fileName) {
-
-        // TODO (no file name or bad format)
-//            HttpStatus status = HttpStatus.BAD_REQUEST;
-//            return new ResponseEntity<>(
-//                    new WorkflowResponse(status.value(),
-//                            "No file name"), status);
+    @GetMapping("/{fileName}")
+    public ResponseEntity<WorkflowResponse> startWorkflow(@PathVariable String fileName) {
+        if(!fileName.matches("[^:*\"<>]+\\.[a-zA-Z\\d]+"))
+            return new ResponseEntity<>(new WorkflowResponse(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "File name " + fileName + " isn't correct or doesn't contain extension"),
+                    HttpStatus.BAD_REQUEST);
 
         FileProcessingWorkflow workflow = workflowClient.newWorkflowStub(FileProcessingWorkflow.class);
         WorkflowExecution execution = WorkflowClient.start(workflow::startFileProcessing, fileName);
 
         return new ResponseEntity<>(new WorkflowResponse(execution.getWorkflowId(),
-                HttpStatus.OK.value(), "Workflow started successfully."), HttpStatus.OK);
+                HttpStatus.OK.value(), "Workflow started successfully for file: " + fileName),
+                HttpStatus.OK);
     }
 }
