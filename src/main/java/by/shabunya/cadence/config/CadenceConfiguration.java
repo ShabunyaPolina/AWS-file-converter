@@ -17,6 +17,7 @@ import org.springframework.context.annotation.PropertySource;
 public class CadenceConfiguration {
     static final String DOMAIN = "Domain";
 
+    //TODO
     @Value("${BUCKET_NAME}")
     private String AWSBucketName;
     @Value("${ACCESS_KEY}")

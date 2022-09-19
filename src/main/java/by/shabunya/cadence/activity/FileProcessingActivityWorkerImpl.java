@@ -6,6 +6,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.groupdocs.conversion.Converter;
 import com.groupdocs.conversion.filetypes.SpreadsheetFileType;
@@ -17,28 +18,32 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class FileProcessingActivityWorkerImpl implements FileProcessingActivityWorker {
-
+    private final String userDirectory;
     private final String AWSBucketName;
-    private final String userDirectory = System.getProperty("user.dir");
     private final AmazonS3 s3Client;
 
+    //TODO
     public FileProcessingActivityWorkerImpl(String AWSBucketName, String accessKey, String secretKey) {
         this.AWSBucketName = AWSBucketName;
 
+        userDirectory = System.getProperty("user.dir");
+
         AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+
         s3Client = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withRegion(Regions.US_EAST_1)
                 .build();
     }
 
+    //TODO
     @Override
     public String createNewFileName(String fileName) {
         System.out.print("1. Create a new file name: ");
 
-        int dotPos = fileName.lastIndexOf('.');
-
         String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
+        int dotPos = fileName.lastIndexOf('.');
 
         String newFileName = fileName.substring(0, dotPos)
                 + currentDate
@@ -56,23 +61,31 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
         GetObjectRequest request = new GetObjectRequest(AWSBucketName, fileName);
         File newFile = new File(userDirectory + "\\" + fileName);
 
+        //TODO
         s3Client.getObject(request, newFile);
     }
 
+    //TODO
     @Override
-    public String convertFileToXLS(String fileName, String newFileName) {
+    public String convertCSVFileToXLS(String fileName, String newFileName) {
         System.out.println("3. Convert file xls format");
 
-        CsvLoadOptions loadOptions = new CsvLoadOptions();
-        loadOptions.setSeparator(',');
-        Converter converter = new Converter(userDirectory + "\\" + fileName, loadOptions);
+        String convertedFileName = null;
 
-        SpreadsheetConvertOptions options = new SpreadsheetConvertOptions();
-        options.setFormat(SpreadsheetFileType.Xls);
+        String extension = fileName.substring(fileName.lastIndexOf("."));
 
-        String convertedFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls";
+        if (extension.equalsIgnoreCase(".csv")) {
+            CsvLoadOptions loadOptions = new CsvLoadOptions();
+            loadOptions.setSeparator(',');
+            Converter converter = new Converter(userDirectory + "\\" + fileName, loadOptions);
 
-        converter.convert(userDirectory + "\\" + convertedFileName, options);
+            SpreadsheetConvertOptions options = new SpreadsheetConvertOptions();
+            options.setFormat(SpreadsheetFileType.Xls);
+
+            convertedFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls";
+
+            converter.convert(userDirectory + "\\" + convertedFileName, options);
+        }
 
         return convertedFileName;
     }
@@ -81,8 +94,9 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
     public void uploadFileToCloudBucket(String fileName) {
         System.out.println("4. Upload a new file");
 
-        File file = new File(userDirectory + "\\" + fileName);
-
-        s3Client.putObject(AWSBucketName, fileName, file);
+        if (fileName != null) {
+            File file = new File(userDirectory + "\\" + fileName);
+            s3Client.putObject(AWSBucketName, fileName, file);
+        }
     }
 }
