@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-//TODO
 public class FileProcessingWorkflowLauncher {
     private final WorkflowClient workflowClient;
 
@@ -19,10 +18,10 @@ public class FileProcessingWorkflowLauncher {
 
     @GetMapping("/{fileName}")
     public ResponseEntity<WorkflowResponse> startWorkflow(@PathVariable String fileName) {
-        if(!fileName.matches("[^:*\"<>]+\\.[a-zA-Z\\d]+"))
+        if(!fileName.matches("[^:*\"<>]+\\.csv"))
             return new ResponseEntity<>(new WorkflowResponse(
                     HttpStatus.BAD_REQUEST.value(),
-                    "File name " + fileName + " isn't correct or doesn't contain extension"),
+                    "File name " + fileName + " isn't correct or doesn't contain .csv extension"),
                     HttpStatus.BAD_REQUEST);
 
         FileProcessingWorkflow workflow = workflowClient.newWorkflowStub(FileProcessingWorkflow.class);

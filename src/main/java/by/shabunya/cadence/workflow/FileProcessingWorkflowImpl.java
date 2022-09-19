@@ -18,8 +18,10 @@ public class FileProcessingWorkflowImpl implements FileProcessingWorkflow {
     @Override
     public void startFileProcessing(String fileName) {
         String newFileName = fileProcessingActivityWorker.createNewFileName(fileName);
-        fileProcessingActivityWorker.downloadFileFromCloudBucket(fileName);
-        newFileName = fileProcessingActivityWorker.convertCSVFileToXLS(fileName, newFileName);
-        fileProcessingActivityWorker.uploadFileToCloudBucket(newFileName);
+        boolean isDownloaded = fileProcessingActivityWorker.downloadFileFromCloudBucket(fileName);
+        if(isDownloaded) {
+            newFileName = fileProcessingActivityWorker.convertCSVFileToXLS(fileName, newFileName);
+            fileProcessingActivityWorker.uploadFileToCloudBucket(newFileName);
+        }
     }
 }

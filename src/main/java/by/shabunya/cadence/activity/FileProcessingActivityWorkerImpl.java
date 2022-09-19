@@ -6,7 +6,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.groupdocs.conversion.Converter;
 import com.groupdocs.conversion.filetypes.SpreadsheetFileType;
@@ -22,7 +21,6 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
     private final String AWSBucketName;
     private final AmazonS3 s3Client;
 
-    //TODO
     public FileProcessingActivityWorkerImpl(String AWSBucketName, String accessKey, String secretKey) {
         this.AWSBucketName = AWSBucketName;
 
@@ -36,7 +34,6 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
                 .build();
     }
 
-    //TODO
     @Override
     public String createNewFileName(String fileName) {
         System.out.print("1. Create a new file name: ");
@@ -55,37 +52,36 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
     }
 
     @Override
-    public void downloadFileFromCloudBucket(String fileName) {
+    public boolean downloadFileFromCloudBucket(String fileName) {
         System.out.println("2. Download a csv file");
 
-        GetObjectRequest request = new GetObjectRequest(AWSBucketName, fileName);
-        File newFile = new File(userDirectory + "\\" + fileName);
+        boolean isDownloaded = false;
+        if (s3Client.doesObjectExist(AWSBucketName, fileName)) {
+            GetObjectRequest request = new GetObjectRequest(AWSBucketName, fileName);
+            File newFile = new File(userDirectory + "\\" + fileName);
 
-        //TODO
-        s3Client.getObject(request, newFile);
+            s3Client.getObject(request, newFile);
+
+            isDownloaded = true;
+        }
+
+        return isDownloaded;
     }
 
-    //TODO
     @Override
     public String convertCSVFileToXLS(String fileName, String newFileName) {
-        System.out.println("3. Convert file xls format");
+        System.out.println("3. Convert file to xls format");
 
-        String convertedFileName = null;
+        CsvLoadOptions loadOptions = new CsvLoadOptions();
+        loadOptions.setSeparator(',');
+        Converter converter = new Converter(userDirectory + "\\" + fileName, loadOptions);
 
-        String extension = fileName.substring(fileName.lastIndexOf("."));
+        SpreadsheetConvertOptions options = new SpreadsheetConvertOptions();
+        options.setFormat(SpreadsheetFileType.Xls);
 
-        if (extension.equalsIgnoreCase(".csv")) {
-            CsvLoadOptions loadOptions = new CsvLoadOptions();
-            loadOptions.setSeparator(',');
-            Converter converter = new Converter(userDirectory + "\\" + fileName, loadOptions);
+        String convertedFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls";
 
-            SpreadsheetConvertOptions options = new SpreadsheetConvertOptions();
-            options.setFormat(SpreadsheetFileType.Xls);
-
-            convertedFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls";
-
-            converter.convert(userDirectory + "\\" + convertedFileName, options);
-        }
+        converter.convert(userDirectory + "\\" + convertedFileName, options);
 
         return convertedFileName;
     }
@@ -94,9 +90,7 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
     public void uploadFileToCloudBucket(String fileName) {
         System.out.println("4. Upload a new file");
 
-        if (fileName != null) {
-            File file = new File(userDirectory + "\\" + fileName);
-            s3Client.putObject(AWSBucketName, fileName, file);
-        }
+        File file = new File(userDirectory + "\\" + fileName);
+        s3Client.putObject(AWSBucketName, fileName, file);
     }
 }
