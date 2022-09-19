@@ -3,12 +3,12 @@ package by.shabunya.cadence.activity;
 import com.uber.cadence.activity.ActivityMethod;
 
 public interface FileProcessingActivityWorker {
-    @ActivityMethod
+
     String createNewFileName(String fileName);
-    @ActivityMethod
+
     void downloadFileFromCloudBucket(String fileName);
-    @ActivityMethod
-    void convertFileToXLS(String fileName);
-    @ActivityMethod
-    void uploadFileToCloudBucket();
+
+    String convertFileToXLS(String fileName, String newFileName);
+
+    void uploadFileToCloudBucket(String fileName);
 }

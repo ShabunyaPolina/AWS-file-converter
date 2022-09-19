@@ -19,18 +19,17 @@ import java.time.format.DateTimeFormatter;
 public class FileProcessingActivityWorkerImpl implements FileProcessingActivityWorker {
 
     private final String AWSBucketName;
-    private final String AWSAccessKey;
-    private final String AWSSecretKey;
-    private final String userDirectory;
-
-    private String newFileName;
+    private final String userDirectory = System.getProperty("user.dir");
+    private final AmazonS3 s3Client;
 
     public FileProcessingActivityWorkerImpl(String AWSBucketName, String accessKey, String secretKey) {
         this.AWSBucketName = AWSBucketName;
-        this.AWSAccessKey = accessKey;
-        this.AWSSecretKey = secretKey;
 
-        userDirectory = System.getProperty("user.dir");
+        AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+        s3Client = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                .withRegion(Regions.US_EAST_1)
+                .build();
     }
 
     @Override
@@ -47,21 +46,12 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
 
         System.out.println(newFileName);
 
-        this.newFileName = newFileName;
-
         return newFileName;
     }
 
     @Override
     public void downloadFileFromCloudBucket(String fileName) {
         System.out.println("2. Download a csv file");
-
-        AWSCredentials credentials = new BasicAWSCredentials(AWSAccessKey, AWSSecretKey);
-
-        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                .withRegion(Regions.US_EAST_1)
-                .build();
 
         GetObjectRequest request = new GetObjectRequest(AWSBucketName, fileName);
         File newFile = new File(userDirectory + "\\" + fileName);
@@ -70,7 +60,7 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
     }
 
     @Override
-    public void convertFileToXLS(String fileName) {
+    public String convertFileToXLS(String fileName, String newFileName) {
         System.out.println("3. Convert file xls format");
 
         CsvLoadOptions loadOptions = new CsvLoadOptions();
@@ -80,23 +70,19 @@ public class FileProcessingActivityWorkerImpl implements FileProcessingActivityW
         SpreadsheetConvertOptions options = new SpreadsheetConvertOptions();
         options.setFormat(SpreadsheetFileType.Xls);
 
-        converter.convert(userDirectory + "\\" +
-                newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls", options);
+        String convertedFileName = newFileName.substring(0, newFileName.lastIndexOf(".")) + ".xls";
+
+        converter.convert(userDirectory + "\\" + convertedFileName, options);
+
+        return convertedFileName;
     }
 
     @Override
-    public void uploadFileToCloudBucket() {
+    public void uploadFileToCloudBucket(String fileName) {
         System.out.println("4. Upload a new file");
-//
-//        AWSCredentials credentials = new BasicAWSCredentials(AWSAccessKey, AWSSecretKey);
-//
-//        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-//                .withCredentials(new AWSStaticCredentialsProvider(credentials))
-//                .withRegion(Regions.US_EAST_1)
-//                .build();
-//
-//        File file = new File(userDirectory + "\\" + newFileName);
-//
-//        s3Client.putObject(AWSBucketName, newFileName, file);
+
+        File file = new File(userDirectory + "\\" + fileName);
+
+        s3Client.putObject(AWSBucketName, fileName, file);
     }
 }
