@@ -10,3 +10,5 @@ Then start CadenceApplication.
 - Cadence GUI can be accessed through http://localhost:8088
 
 yourName?
+
+properties
